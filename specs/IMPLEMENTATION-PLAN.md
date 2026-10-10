@@ -7,7 +7,7 @@ M5→Phase 5a, M6→Phase 5b (+ Phase 0 setup, manual).
 ## Phase 0 — Environment & Scaffolds (manual, before DevFleet)
 
 - [ ] 0.1 Install Foundry, Circom binary, snarkjs per `STACK.md §4`; record versions.
-- [ ] 0.2 Create folders `bitn build/{contracts,circuits,worker,web}`; init `contracts/` with
+- [ ] 0.2 Create folders `{contracts,circuits,worker,web}`; init `contracts/` with
       `forge init --no-git`; init `worker/` + `web/` with `npm` + TypeScript configs.
 - [ ] 0.3 Append `circuits/build/` (keys, wasm, zkey) to the repo `.gitignore` — proving keys are
       large generated artifacts, never committed.

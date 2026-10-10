@@ -1,7 +1,7 @@
 # Verity — Prove the Computation, Not Just the Result
 
 **BitNBuild hackathon project for `ps.md` (blockchain-based verifiable computation).**
-All planning documentation and all future implementation code live in this `bitn build/` folder.
+All planning and specification documentation lives in this `specs/` folder.
 
 ## Concise Project Summary
 
@@ -24,7 +24,7 @@ with full execution lineage.
 | On-chain verification | True pairing check via EVM precompile `0x08` (not a signature attestation) |
 | Scope | Full 5-phase build: contracts + proving pipeline + worker + web + Chaos Lab + Passport |
 | Chain target | Local Anvil by default; Base/Arbitrum Sepolia optional |
-| Root folder | `C:\dev\BitNBuild\bitn build\` |
+| Specs folder | `specs/` |
 
 ## Document Index
 
