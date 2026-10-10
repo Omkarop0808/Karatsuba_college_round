@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   FileCode2,
@@ -39,16 +39,43 @@ export default function RequestComputationPage() {
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastSuccess, setBroadcastSuccess] = useState<any>(null);
 
-  // Deterministic Poseidon hex hash representation for standard test vectors
-  const getCommitment = () => {
+  // Sanitized numerical representations to guarantee non-negative prover values
+  const safeIncome = Math.max(0, Number(income) || 0);
+  const safeDebt = Math.max(0, Number(debt) || 0);
+  const safeHist = Math.max(0, Number(historyMonths) || 0);
+
+  // Deterministic Poseidon hex hash representation for standard test vectors (Memoized)
+  const commitmentHash = useMemo(() => {
     if (income === "100000" && debt === "5000" && historyMonths === "24" && salt === "123456789") {
       return "0x26026a2500231887c3f0f27b01bf2175c63697d8bb44ed66f30358427247c6fd";
     }
     return "0x" + Math.abs(income.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0) | 0, 0)).toString(16).padStart(64, 'a');
-  };
+  }, [income, debt, historyMonths, salt]);
+
+  // Live arithmetic predicate calculation (Memoized)
+  const { computedScore, isEligible } = useMemo(() => {
+    const score = (10 * safeIncome) + (2 * safeHist) - (5 * safeDebt);
+    return {
+      computedScore: score,
+      isEligible: score >= 500000
+    };
+  }, [safeIncome, safeHist, safeDebt]);
+
+  // Dynamic fee calculation (Memoized)
+  const { bountyNum, protocolFeeNum, estimatedGasEth, totalEthRequired } = useMemo(() => {
+    const b = Number(bounty) || 0;
+    const p = 0.005;
+    const g = 0.0035;
+    return {
+      bountyNum: b,
+      protocolFeeNum: p,
+      estimatedGasEth: g,
+      totalEthRequired: (b + p + g).toFixed(4)
+    };
+  }, [bounty]);
 
   const handleCopyHash = () => {
-    navigator.clipboard.writeText(getCommitment());
+    navigator.clipboard.writeText(commitmentHash);
     setCopiedHash(true);
     setTimeout(() => setCopiedHash(false), 2000);
   };
@@ -84,7 +111,7 @@ export default function RequestComputationPage() {
       setBroadcastSuccess({
         taskId: 102,
         txHash: "0x4c4a0b42c0117453f8c3e4c8f0edca775583674315b2499fcbe4562e95c6e555",
-        inputCommit: getCommitment(),
+        inputCommit: commitmentHash,
         bounty: bounty + " ETH",
         protocolFee: "0.0050 ETH",
         gasUsed: "218,412 gas",
@@ -102,17 +129,6 @@ export default function RequestComputationPage() {
     setBounty("0.1");
   };
 
-  const safeIncome = Math.max(0, Number(income) || 0);
-  const safeDebt = Math.max(0, Number(debt) || 0);
-  const safeHist = Math.max(0, Number(historyMonths) || 0);
-  const computedScore = (10 * safeIncome) + (2 * safeHist) - (5 * safeDebt);
-  const isEligible = computedScore >= 500000;
-
-  const bountyNum = Number(bounty) || 0;
-  const protocolFeeNum = 0.005;
-  const estimatedGasEth = 0.0035;
-  const totalEthRequired = (bountyNum + protocolFeeNum + estimatedGasEth).toFixed(4);
-
   return (
     <main className="w-full min-h-screen py-12 px-4 sm:px-6" suppressHydrationWarning>
       <div className="max-w-6xl mx-auto space-y-8">
@@ -120,7 +136,7 @@ export default function RequestComputationPage() {
         {/* Header Breadcrumb */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b-2 border-slate-950">
           <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-400 text-slate-950 border-2 border-slate-950 font-mono text-xs font-black tracking-wider uppercase mb-3 shadow-[3px_3px_0px_#0f172a]">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-400 text-cyan-950 border-2 border-slate-950 font-mono text-xs font-black tracking-wider uppercase mb-3 shadow-[3px_3px_0px_#0f172a]">
               <FileCode2 className="w-3.5 h-3.5" />
               <span>COMPUTATION STUDIO &bull; CHECKOUT & ESCROW</span>
             </div>
@@ -147,25 +163,25 @@ export default function RequestComputationPage() {
               1-Click Benchmark Presets:
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Dataset presets">
             <button
               type="button"
               onClick={() => loadPreset("prime")}
-              className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-950 border-2 border-slate-950 font-mono text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+              className="px-3.5 py-2.5 min-h-[44px] flex items-center rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-950 border-2 border-slate-950 font-mono text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
             >
               Prime Borrower ($100k, Score: 975k &bull; PASS)
             </button>
             <button
               type="button"
               onClick={() => loadPreset("subprime")}
-              className="px-3 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-950 border-2 border-slate-950 font-mono text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+              className="px-3.5 py-2.5 min-h-[44px] flex items-center rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-950 border-2 border-slate-950 font-mono text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
             >
               High-Risk Defaulter ($35k, $40k debt &bull; FAIL)
             </button>
             <button
               type="button"
               onClick={() => loadPreset("threshold")}
-              className="px-3 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-950 border-2 border-slate-950 font-mono text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+              className="px-3.5 py-2.5 min-h-[44px] flex items-center rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-950 border-2 border-slate-950 font-mono text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
             >
               Exact Threshold ($50k, Score: 500k &bull; PASS)
             </button>
@@ -174,11 +190,11 @@ export default function RequestComputationPage() {
 
         {/* Success Modal / Banner */}
         {broadcastSuccess && (
-          <div className="relative rounded-[2rem] border-2 border-slate-950 p-2 bg-emerald-100 shadow-[8px_8px_0px_#065f46] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div role="alert" className="relative rounded-[2rem] border-2 border-slate-950 p-2 bg-emerald-100 shadow-[8px_8px_0px_#065f46] animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="rounded-[calc(2rem-0.375rem)] bg-white p-6 sm:p-8 border-2 border-slate-950 space-y-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-500 border-2 border-slate-950 text-slate-950 flex items-center justify-center shadow-[3px_3px_0px_#0f172a]">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500 border-2 border-slate-950 text-emerald-950 flex items-center justify-center shadow-[3px_3px_0px_#0f172a]">
                     <CheckCircle2 className="w-7 h-7" />
                   </div>
                   <div>
@@ -190,14 +206,15 @@ export default function RequestComputationPage() {
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 border-2 border-slate-950 text-slate-950 font-mono text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-all cursor-pointer"
+                    aria-label="Deploy another computation task"
+                    className="flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-full bg-slate-100 hover:bg-slate-200 border-2 border-slate-950 text-slate-950 font-mono text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-all cursor-pointer"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Deploy Another</span>
                   </button>
                   <Link
                     href={`/passport/${broadcastSuccess.taskId}`}
-                    className="px-6 py-2.5 rounded-full bg-slate-950 hover:bg-slate-800 text-white font-mono font-black text-xs tracking-wider uppercase no-underline shadow-[3px_3px_0px_#0f172a] border-2 border-slate-950 transition-all"
+                    className="flex items-center px-6 py-2.5 min-h-[44px] rounded-full bg-slate-950 hover:bg-slate-800 text-white font-mono font-black text-xs tracking-wider uppercase no-underline shadow-[3px_3px_0px_#0f172a] border-2 border-slate-950 transition-all"
                   >
                     Inspect Proof Passport &rarr;
                   </Link>
@@ -247,48 +264,51 @@ export default function RequestComputationPage() {
                 </span>
               </div>
 
-              {/* Primary User Inputs */}
+              {/* Primary User Inputs with Proper Semantic Label For and ID */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-mono font-black uppercase tracking-wider text-slate-800">
+                  <label htmlFor="income-input" className="text-xs font-mono font-black uppercase tracking-wider text-slate-800 block">
                     Annual Income ($)
                   </label>
                   <input
+                    id="income-input"
                     type="number"
                     min="0"
                     value={income}
                     onChange={(e) => setIncome(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border-2 border-slate-950 font-mono font-black text-slate-950 text-base focus:outline-none focus:bg-blue-50 shadow-[3px_3px_0px_#0f172a] transition-all"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border-2 border-slate-950 font-mono font-black text-blue-950 text-base focus:outline-none focus:bg-blue-50 shadow-[3px_3px_0px_#0f172a] transition-all"
                     placeholder="100000"
                   />
                   <span className="text-[10px] font-mono text-slate-600 block font-semibold">Weight $w_1 = 10$</span>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-mono font-black uppercase tracking-wider text-slate-800">
+                  <label htmlFor="debt-input" className="text-xs font-mono font-black uppercase tracking-wider text-slate-800 block">
                     Outstanding Debt ($)
                   </label>
                   <input
+                    id="debt-input"
                     type="number"
                     min="0"
                     value={debt}
                     onChange={(e) => setDebt(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border-2 border-slate-950 font-mono font-black text-slate-950 text-base focus:outline-none focus:bg-blue-50 shadow-[3px_3px_0px_#0f172a] transition-all"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border-2 border-slate-950 font-mono font-black text-blue-950 text-base focus:outline-none focus:bg-blue-50 shadow-[3px_3px_0px_#0f172a] transition-all"
                     placeholder="5000"
                   />
                   <span className="text-[10px] font-mono text-slate-600 block font-semibold">Weight $w_2 = 5$ subtracted</span>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-mono font-black uppercase tracking-wider text-slate-800">
+                  <label htmlFor="history-input" className="text-xs font-mono font-black uppercase tracking-wider text-slate-800 block">
                     History (Months)
                   </label>
                   <input
+                    id="history-input"
                     type="number"
                     min="0"
                     value={historyMonths}
                     onChange={(e) => setHistoryMonths(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border-2 border-slate-950 font-mono font-black text-slate-950 text-base focus:outline-none focus:bg-blue-50 shadow-[3px_3px_0px_#0f172a] transition-all"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border-2 border-slate-950 font-mono font-black text-blue-950 text-base focus:outline-none focus:bg-blue-50 shadow-[3px_3px_0px_#0f172a] transition-all"
                     placeholder="24"
                   />
                   <span className="text-[10px] font-mono text-slate-600 block font-semibold">Weight $w_3 = 2$ added</span>
@@ -296,14 +316,14 @@ export default function RequestComputationPage() {
               </div>
 
               {/* Predicate Live Calculation Preview */}
-              <div className="p-5 rounded-2xl bg-slate-100 border-2 border-slate-950 shadow-[4px_4px_0px_#0f172a] space-y-2">
+              <div role="status" aria-live="polite" className="p-5 rounded-2xl bg-slate-100 border-2 border-slate-950 shadow-[4px_4px_0px_#0f172a] space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-mono font-black text-blue-950 uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Circuit Predicate Evaluation Preview</span>
                   </div>
                   <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-black border-2 border-slate-950 ${
-                    isEligible ? "bg-emerald-300 text-slate-950" : "bg-rose-300 text-slate-950"
+                    isEligible ? "bg-emerald-300 text-emerald-950" : "bg-rose-300 text-rose-950"
                   }`}>
                     {isEligible ? "ELIGIBLE (PASS)" : "BELOW THRESHOLD (FAIL)"}
                   </span>
@@ -321,6 +341,8 @@ export default function RequestComputationPage() {
                 <button
                   type="button"
                   onClick={() => setShowAdvanced(!showAdvanced)}
+                  aria-expanded={showAdvanced}
+                  aria-controls="advanced-circuit-params"
                   className="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 flex items-center justify-between font-mono text-xs font-black text-slate-900 border-b border-slate-300 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
@@ -334,26 +356,28 @@ export default function RequestComputationPage() {
                 </button>
 
                 {showAdvanced && (
-                  <div className="p-5 bg-white space-y-4 animate-in fade-in duration-200">
+                  <div id="advanced-circuit-params" className="p-5 bg-white space-y-4 animate-in fade-in duration-200">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-mono font-black uppercase tracking-wider text-slate-800">
+                        <label htmlFor="salt-input" className="text-xs font-mono font-black uppercase tracking-wider text-slate-800">
                           Cryptographic Salt (Entropy Blinding)
                         </label>
                         <button
                           type="button"
                           onClick={generateRandomSalt}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-950 border border-slate-950 font-mono text-[11px] font-black cursor-pointer shadow-[1px_1px_0px_#0f172a]"
+                          aria-label="Generate fresh random cryptographic salt"
+                          className="flex items-center gap-1 px-3 py-1.5 min-h-[36px] rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-950 border border-slate-950 font-mono text-[11px] font-black cursor-pointer shadow-[1px_1px_0px_#0f172a]"
                         >
                           <Dices className="w-3.5 h-3.5" />
                           <span>Generate Entropy</span>
                         </button>
                       </div>
                       <input
+                        id="salt-input"
                         type="number"
                         value={salt}
                         onChange={(e) => setSalt(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border-2 border-slate-950 font-mono font-black text-slate-800 text-sm focus:outline-none focus:bg-purple-50 shadow-[2px_2px_0px_#0f172a]"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border-2 border-slate-950 font-mono font-black text-purple-950 text-sm focus:outline-none focus:bg-purple-50 shadow-[2px_2px_0px_#0f172a]"
                         placeholder="123456789"
                       />
                       <span className="text-[11px] font-mono text-slate-600 block">
@@ -399,7 +423,7 @@ export default function RequestComputationPage() {
                       Connected Account
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-black border border-white">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500 text-emerald-950 font-black border border-white">
                     Anvil L1 &bull; 31337
                   </span>
                 </div>
@@ -418,14 +442,15 @@ export default function RequestComputationPage() {
                   <button
                     type="button"
                     onClick={handleCopyHash}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-950 border border-slate-950 font-mono text-[11px] font-black cursor-pointer shadow-[1px_1px_0px_#0f172a] transition-all"
+                    aria-label="Copy input commitment hash to clipboard"
+                    className="flex items-center gap-1 px-3 py-1.5 min-h-[36px] rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-950 border border-slate-950 font-mono text-[11px] font-black cursor-pointer shadow-[1px_1px_0px_#0f172a] transition-all"
                   >
                     {copiedHash ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedHash ? "Copied!" : "Copy Hash"}</span>
                   </button>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-100 border-2 border-slate-950 font-mono text-[11px] text-blue-950 font-black break-all select-all shadow-[2px_2px_0px_#0f172a]">
-                  {getCommitment()}
+                  {commitmentHash}
                 </div>
                 <span className="text-[10px] font-mono text-slate-600 block font-semibold">
                   Published to VerityRegistry.sol. Raw inputs never leave browser memory.
@@ -435,28 +460,30 @@ export default function RequestComputationPage() {
               {/* Bounty Staking & Timeout Configuration */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-mono font-black uppercase tracking-wider text-slate-800 block">
+                  <label htmlFor="bounty-input" className="text-xs font-mono font-black uppercase tracking-wider text-slate-800 block">
                     Bounty Escrow (ETH)
                   </label>
                   <div className="relative">
                     <input
+                      id="bounty-input"
                       type="number"
                       step="0.05"
                       min="0.01"
                       value={bounty}
                       onChange={(e) => setBounty(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border-2 border-slate-950 text-xl font-mono font-black text-slate-950 focus:outline-none focus:bg-amber-50 shadow-[3px_3px_0px_#0f172a] transition-all"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border-2 border-slate-950 text-xl font-mono font-black text-amber-950 focus:outline-none focus:bg-amber-50 shadow-[3px_3px_0px_#0f172a] transition-all"
                     />
                     <Coins className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-600" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-mono font-black uppercase tracking-wider text-slate-800 block">
+                  <label htmlFor="timeout-select" className="text-xs font-mono font-black uppercase tracking-wider text-slate-800 block">
                     Timeout Deadline
                   </label>
                   <div className="relative">
                     <select
+                      id="timeout-select"
                       value={timeoutSec}
                       onChange={(e) => setTimeoutSec(e.target.value)}
                       className="w-full px-3.5 py-3 rounded-xl bg-slate-50 border-2 border-slate-950 text-xs font-mono text-slate-950 font-black focus:outline-none shadow-[3px_3px_0px_#0f172a] transition-all"
@@ -517,7 +544,8 @@ export default function RequestComputationPage() {
                 type="button"
                 onClick={handleBroadcast}
                 disabled={isBroadcasting}
-                className="group w-full py-4 px-6 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-mono font-black text-xs uppercase tracking-wider transition-all duration-200 border-2 border-slate-950 shadow-[4px_4px_0px_#0f172a] flex items-center justify-between cursor-pointer disabled:opacity-50 hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
+                aria-label="Deploy escrow and broadcast task to Ethereum L1"
+                className="group w-full py-4 px-6 min-h-[48px] rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-mono font-black text-xs uppercase tracking-wider transition-all duration-200 border-2 border-slate-950 shadow-[4px_4px_0px_#0f172a] flex items-center justify-between cursor-pointer disabled:opacity-50 hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
               >
                 <span>
                   {isBroadcasting ? "Broadcasting to Ethereum L1..." : "Deploy Escrow & Broadcast Task"}

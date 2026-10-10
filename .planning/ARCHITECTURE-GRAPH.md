@@ -102,9 +102,8 @@ graph TD
 | `worker.ts` | Daemon Script | TypeScript / Node.js | In: WebSocket RPC $\to$ Out: Ethereum Tx | Autonomous worker watching for new tasks, executing code, and generating proofs. |
 | `attacks.ts` | Attack Harness | TypeScript | In: Task ID $\to$ Out: Tampered Tx Payload | Synthesizes mutated proofs and corrupted payloads for the Chaos Lab. |
 
-### Frontend & Observability Components
-| Entity ID | Type | Framework | Interactions | Role |
-|---|---|---|---|---|
 | `ChaosLabDeck` | React Component | Next.js 14 / Viem | OnClick $\to$ Triggers simulated attack tx | Tactical control deck allowing judges to trigger 4 live attack vectors. |
 | `TraceLineageDAG` | React Component | SVG / D3 / Tailwind | In: Task Metadata $\to$ Out: Visual DAG | Step-by-step visual proof explorer showing full execution provenance. |
 | `ProofPassportCard` | React Component | JSON-LD / SVG | In: Finalized Task $\to$ Out: Verifiable Token | Self-authenticating digital proof credential exportable for auditors. |
+| `RequestCheckoutStudio` | React Component | Next.js / React 19 / Viem | In: Dataset Inputs, Escrow $\to$ Out: L1 Task Broadcast | Verifiable computation studio with live arithmetic predicate preview, escrow breakdown, and progressive entropy disclosure. |
+
