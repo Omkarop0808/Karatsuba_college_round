@@ -1,0 +1,228 @@
+{
+  "mission_id": "audit-control-demo",
+  "goal": "Autonomously investigate financial integrity and calculate deterministic ground-truth variance for IntegrityLab-Control (Clean Baseline).",
+  "target_system": "IntegrityLab-Control (Clean Baseline)",
+  "scope": {
+    "repo_path": "integritylab/source",
+    "data_file": "integritylab/data/trades_control_case.csv",
+    "report_file": "integritylab/reports/control_performance_report.json",
+    "claimed_fee_bps": 5.0,
+    "initial_capital": 100000.0
+  },
+  "status": "COMPLETED",
+  "stage": "VERDICT_SEALED",
+  "progress_pct": 100,
+  "created_at": 1787662933.81693,
+  "completed_at": 1787662933.868783,
+  "elapsed_time_ms": 51.9,
+  "financial_integrity_score": 100.0,
+  "integrity_grade": "A+",
+  "total_capital_at_risk": 0.0,
+  "evidence_collected": [
+    {
+      "type": "AST_MAP",
+      "files_scanned": 0,
+      "routines_discovered": []
+    },
+    {
+      "type": "NORMALIZED_DATASET",
+      "dataset_path": "integritylab/data/trades_control_case.csv",
+      "record_count": 2,
+      "source_hash": "f6ff6ede50ef0f8fc9af760218200719f0e3bb4277cd1e6173988ed743cc2616"
+    },
+    {
+      "type": "DUCKDB_TABULAR_PROFILE",
+      "profile": {
+        "total_records": 2,
+        "unique_symbols": 1,
+        "symbol_stats": [
+          {
+            "symbol": "BTC/USD",
+            "count": 2
+          }
+        ],
+        "engine": "DuckDB In-Memory",
+        "version": "duckdb_engine_v1.0"
+      }
+    }
+  ],
+  "findings_count": 1,
+  "findings": [
+    {
+      "finding_id": "CTRL-001",
+      "title": "Clean Financial Calculation Verified",
+      "status": "VERIFIED",
+      "severity": "LOW",
+      "confidence": 0.99,
+      "claim": "Reported metrics perfectly match deterministic bottom-up reconstruction from canonical trade events.",
+      "sources": [
+        {
+          "file": "config.json",
+          "line_range": "1-20",
+          "source_hash": "",
+          "code_snippet": null
+        }
+      ],
+      "data_evidence": {
+        "dataset_id": "trades_control_case.csv",
+        "record_count": 2,
+        "source_path": "integritylab/data/trades_control_case.csv",
+        "source_hash": "f6ff6ede50ef0f8fc9af760218200719f0e3bb4277cd1e6173988ed743cc2616"
+      },
+      "provenance": {
+        "timestamp": "2026-08-25T13:02:13.828572+00:00",
+        "normalizer_version": "v1.2.0",
+        "verifier_version": "verifier_suite_v1.0",
+        "transformation": "canonical_financial_event_normalization"
+      },
+      "calculation": {
+        "reported_pnl": 4500.0,
+        "reconstructed_pnl": 4500.0,
+        "reported_return_pct": 4.5,
+        "reconstructed_return_pct": 4.5,
+        "reported_fee": null,
+        "recalculated_fee": null,
+        "variance_amount": 0.0,
+        "details": {}
+      },
+      "verification": {
+        "status": "VERIFIED",
+        "method": "full_reconciliation_audit",
+        "verifier": "trade_reconciler_v1.0"
+      },
+      "impact": {
+        "level": "NONE",
+        "capital_at_risk": 0.0
+      },
+      "explanation": "All trade fills, fee deductions, and return calculations match ground truth with zero material variance."
+    }
+  ],
+  "remediation_plans": [],
+  "adaptive_decisions": [
+    {
+      "decision_index": 1,
+      "timestamp": 1787662933.81816,
+      "trigger_agent": "AuditPlanner",
+      "reasoning": "Identified repository path 'integritylab/source' and dataset 'integritylab/data/trades_control_case.csv'. Validating schema readiness.",
+      "chosen_action": "ROUTE_TO_AST_SCOPING",
+      "target_tool": "scan_repository_ast",
+      "parameters": {
+        "repo_path": "integritylab/source"
+      },
+      "outcome": "Dispatched RepositoryInvestigator for bounded AST method discovery."
+    },
+    {
+      "decision_index": 2,
+      "timestamp": 1787662933.820118,
+      "trigger_agent": "RepositoryInvestigator",
+      "reasoning": "AST mapping located 0 financial functions. Routing to claim extractor.",
+      "chosen_action": "ROUTE_TO_CLAIM_EXTRACTION",
+      "target_tool": "load_normalized_trades",
+      "parameters": {
+        "report_file": "integritylab/reports/control_performance_report.json"
+      },
+      "outcome": "Dispatched FinancialInvestigator to extract reported metrics."
+    },
+    {
+      "decision_index": 3,
+      "timestamp": 1787662933.824329,
+      "trigger_agent": "FinancialInvestigator",
+      "reasoning": "Extracted 0 performance claim targets with 2 canonical fills. Routing to deterministic verifiers.",
+      "chosen_action": "ROUTE_TO_DETERMINISTIC_RECONCILIATION",
+      "target_tool": "execute_trade_reconciliation",
+      "parameters": {
+        "record_count": 2,
+        "initial_capital": 100000.0
+      },
+      "outcome": "Dispatched ContradictionInvestigator for bottom-up FIFO lot matching."
+    },
+    {
+      "decision_index": 4,
+      "timestamp": 1787662933.868402,
+      "trigger_agent": "ContradictionInvestigator",
+      "reasoning": "Deterministic recalculation exactly matches reported claims ($0.00 discrepancy). Zero hallucinations detected.",
+      "chosen_action": "ROUTE_TO_REPORT_AGENT",
+      "target_tool": "generate_report",
+      "parameters": {
+        "status": "VERIFIED_SOUND"
+      },
+      "outcome": "Proceeding directly to ReportAgent for sound verdict synthesis."
+    }
+  ],
+  "replay_snapshots": [
+    {
+      "step_index": 1,
+      "timestamp": 1787662933.816952,
+      "elapsed_ms": 0.1,
+      "stage": "PLANNING",
+      "active_agent": "AuditPlanner",
+      "description": "Scoping repository structure and validating transactional datasets",
+      "findings_count": 0,
+      "progress_pct": 15,
+      "evidence_count": 0
+    },
+    {
+      "step_index": 2,
+      "timestamp": 1787662933.818175,
+      "elapsed_ms": 1.3,
+      "stage": "AST_SCOPING",
+      "active_agent": "RepositoryInvestigator",
+      "description": "Parsing AST syntax trees to map calculation routines",
+      "findings_count": 0,
+      "progress_pct": 30,
+      "evidence_count": 0
+    },
+    {
+      "step_index": 3,
+      "timestamp": 1787662933.820131,
+      "elapsed_ms": 3.3,
+      "stage": "CLAIM_EXTRACTION",
+      "active_agent": "FinancialInvestigator",
+      "description": "Extracting claimed performance metrics and normalizing trade fills",
+      "findings_count": 0,
+      "progress_pct": 45,
+      "evidence_count": 1
+    },
+    {
+      "step_index": 4,
+      "timestamp": 1787662933.82438,
+      "elapsed_ms": 7.5,
+      "stage": "ADAPTIVE_VERIFICATION",
+      "active_agent": "ContradictionInvestigator",
+      "description": "Executing deterministic FIFO reconciliation and DuckDB SQL profiling",
+      "findings_count": 0,
+      "progress_pct": 65,
+      "evidence_count": 2
+    },
+    {
+      "step_index": 5,
+      "timestamp": 1787662933.868434,
+      "elapsed_ms": 51.6,
+      "stage": "REPORT_SYNTHESIS",
+      "active_agent": "ReportAgent",
+      "description": "Synthesizing executive report and sealing cryptographic provenance graphs",
+      "findings_count": 1,
+      "progress_pct": 95,
+      "evidence_count": 3
+    },
+    {
+      "step_index": 6,
+      "timestamp": 1787662933.8688052,
+      "elapsed_ms": 51.9,
+      "stage": "VERDICT_SEALED",
+      "active_agent": "ReportAgent",
+      "description": "Audit mission complete with FIS 100.0/100 (A+)",
+      "findings_count": 1,
+      "progress_pct": 100,
+      "evidence_count": 3
+    }
+  ],
+  "resumable_checkpoint": {
+    "mission_id": "audit-control-demo",
+    "saved_at": 1787662933.868812,
+    "target_system": "IntegrityLab-Control (Clean Baseline)",
+    "stage": "VERDICT_SEALED",
+    "status": "COMPLETED",
+    "findings_count": 1
+  }
+}

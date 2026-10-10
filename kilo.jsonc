@@ -1,0 +1,13 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "permission": {
+    "edit": "allow"
+  },
+  "agent": {
+    "plan": {
+      "permission": {
+        "edit": "allow"
+      }
+    }
+  }
+}
