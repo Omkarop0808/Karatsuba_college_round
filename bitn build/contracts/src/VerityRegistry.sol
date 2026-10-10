@@ -10,10 +10,19 @@ contract VerityRegistry is ReentrancyGuard {
 
     enum Status { None, Requested, Submitted, Challenged, Finalized, Refunded, Slashed }
 
+    struct Policy {
+        bytes32 policyHash;
+        uint256 w1;
+        uint256 w2;
+        uint256 w3;
+        uint256 threshold;
+    }
+
     struct Task {
         address requester;
         bytes32 codeCommitment;
         bytes32 inputCommitment;
+        Policy policy;
         uint256 bounty;
         uint64 deadline;
         address worker;
@@ -25,15 +34,15 @@ contract VerityRegistry is ReentrancyGuard {
     uint256 public nextTaskId;
     mapping(uint256 => Task) public tasks;
     mapping(address => uint256) public workerStakes;
+    uint256 public protocolFees;
     
     IVerityVerifier public immutable verifier;
     address public disputeManager;
 
-    event TaskRequested(uint256 indexed taskId, address indexed requester, bytes32 codeHash, bytes32 inputHash, uint256 bounty, uint64 deadline);
+    event TaskStateChanged(uint256 indexed taskId, Status oldState, Status newState, address indexed actor);
+    event TaskRequested(uint256 indexed taskId, address indexed requester, bytes32 codeHash, bytes32 inputHash, bytes32 policyHash, uint256 w1, uint256 w2, uint256 w3, uint256 threshold, uint256 bounty, uint64 deadline);
     event WorkerRegistered(address indexed worker, uint256 amount);
-    event TaskSubmitted(uint256 indexed taskId, address indexed worker, bytes32 outputCommitment);
-    event TaskFinalized(uint256 indexed taskId);
-    event Refunded(uint256 indexed taskId);
+    event WorkerWithdrew(address indexed worker, uint256 amount);
 
     error InvalidProof();
     error PublicSignalsMismatch();
@@ -70,9 +79,22 @@ contract VerityRegistry is ReentrancyGuard {
         emit WorkerRegistered(msg.sender, workerStakes[msg.sender]);
     }
 
+    function withdrawStake(uint256 amount) external nonReentrant {
+        if (workerStakes[msg.sender] < amount) revert InsufficientStake();
+        workerStakes[msg.sender] -= amount;
+        (bool ok, ) = payable(msg.sender).call{value: amount}("");
+        if (!ok) revert TransferFailed();
+        emit WorkerWithdrew(msg.sender, amount);
+    }
+
     function requestComputation(
         bytes32 codeCommitment,
         bytes32 inputCommitment,
+        bytes32 policyHash,
+        uint256 w1,
+        uint256 w2,
+        uint256 w3,
+        uint256 threshold,
         uint64 timeoutSec
     ) external payable returns (uint256) {
         require(msg.value > 0, "Bounty required");
@@ -82,6 +104,13 @@ contract VerityRegistry is ReentrancyGuard {
             requester: msg.sender,
             codeCommitment: codeCommitment,
             inputCommitment: inputCommitment,
+            policy: Policy({
+                policyHash: policyHash,
+                w1: w1,
+                w2: w2,
+                w3: w3,
+                threshold: threshold
+            }),
             bounty: msg.value,
             deadline: uint64(block.timestamp + timeoutSec),
             worker: address(0),
@@ -90,7 +119,8 @@ contract VerityRegistry is ReentrancyGuard {
             status: Status.Requested
         });
 
-        emit TaskRequested(taskId, msg.sender, codeCommitment, inputCommitment, msg.value, tasks[taskId].deadline);
+        emit TaskRequested(taskId, msg.sender, codeCommitment, inputCommitment, policyHash, w1, w2, w3, threshold, msg.value, tasks[taskId].deadline);
+        emit TaskStateChanged(taskId, Status.None, Status.Requested, msg.sender);
         return taskId;
     }
 
@@ -105,20 +135,23 @@ contract VerityRegistry is ReentrancyGuard {
         if (task.status != Status.Requested) revert BadStatus();
         if (block.timestamp > task.deadline) revert DeadlinePassed();
         if (signals[0] != uint256(task.inputCommitment)) revert InputHashMismatch();
+        if (signals[1] != uint256(outputCommitment)) revert PublicSignalsMismatch();
+        if (signals[2] != uint256(task.policy.policyHash)) revert PublicSignalsMismatch();
+        if (signals[3] != task.policy.w1) revert PublicSignalsMismatch();
+        if (signals[4] != task.policy.w2) revert PublicSignalsMismatch();
+        if (signals[5] != task.policy.w3) revert PublicSignalsMismatch();
+        if (signals[6] != task.policy.threshold) revert PublicSignalsMismatch();
         
         // ZK Verification
         bool isValid = verifier.verifyProof(proof, signals);
         if (!isValid) revert InvalidProof(); 
-
-        // Also check if public outputs match our output commitments 
-        if (signals[1] != uint256(outputCommitment)) revert PublicSignalsMismatch();
 
         task.worker = msg.sender;
         task.outputCommitment = outputCommitment;
         task.status = Status.Submitted;
         task.challengeEnd = uint64(block.number + CHALLENGE_WINDOW_BLOCKS);
 
-        emit TaskSubmitted(taskId, msg.sender, outputCommitment);
+        emit TaskStateChanged(taskId, Status.Requested, Status.Submitted, msg.sender);
     }
 
     function finalizeTask(uint256 taskId) external nonReentrant {
@@ -134,7 +167,7 @@ contract VerityRegistry is ReentrancyGuard {
         (bool ok, ) = payable(task.worker).call{value: bountyPayout}("");
         if (!ok) revert TransferFailed();
 
-        emit TaskFinalized(taskId);
+        emit TaskStateChanged(taskId, Status.Submitted, Status.Finalized, msg.sender);
     }
 
     function claimTimeoutRefund(uint256 taskId) external nonReentrant {
@@ -151,7 +184,7 @@ contract VerityRegistry is ReentrancyGuard {
         (bool ok, ) = payable(task.requester).call{value: refund}("");
         if (!ok) revert TransferFailed();
 
-        emit Refunded(taskId);
+        emit TaskStateChanged(taskId, Status.Requested, Status.Refunded, msg.sender);
     }
 
     function slashWorker(address worker, uint256 amount) external onlyDisputeManager {
@@ -163,6 +196,7 @@ contract VerityRegistry is ReentrancyGuard {
     }
 
     function setTaskStatus(uint256 taskId, Status newStatus) external onlyDisputeManager {
+        emit TaskStateChanged(taskId, tasks[taskId].status, newStatus, msg.sender);
         tasks[taskId].status = newStatus;
     }
 
@@ -177,5 +211,13 @@ contract VerityRegistry is ReentrancyGuard {
 
     function zeroTaskBounty(uint256 taskId) external onlyDisputeManager {
         tasks[taskId].bounty = 0;
+    }
+
+    function addProtocolFee(uint256 amount) external onlyDisputeManager {
+        protocolFees += amount;
+    }
+
+    function getTask(uint256 taskId) external view returns (Task memory) {
+        return tasks[taskId];
     }
 }

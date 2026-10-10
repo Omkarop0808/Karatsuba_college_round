@@ -6,6 +6,7 @@ import "../src/VerityRegistry.sol";
 import "../src/VerityDisputeManager.sol";
 import "../src/VerityVerifier.sol";
 import "../src/Groth16Verifier.sol";
+import "../src/PoseidonT5.sol";
 
 contract DeployVerity is Script {
     function run() external {
@@ -15,7 +16,14 @@ contract DeployVerity is Script {
         Groth16Verifier groth = new Groth16Verifier();
         VerityVerifier verifier = new VerityVerifier(address(groth));
         VerityRegistry registry = new VerityRegistry(address(verifier));
-        VerityDisputeManager disputeManager = new VerityDisputeManager(payable(address(registry)));
+        
+        bytes memory bytecode = PoseidonT5Bytecode.getBytecode();
+        address poseidonAddr;
+        assembly {
+            poseidonAddr := create(0, add(bytecode, 0x20), mload(bytecode))
+        }
+        
+        VerityDisputeManager disputeManager = new VerityDisputeManager(payable(address(registry)), poseidonAddr);
         
         registry.setDisputeManager(address(disputeManager));
 
@@ -25,5 +33,6 @@ contract DeployVerity is Script {
         console.log("VerityVerifier:", address(verifier));
         console.log("VerityRegistry:", address(registry));
         console.log("VerityDisputeManager:", address(disputeManager));
+        console.log("PoseidonT5:", poseidonAddr);
     }
 }

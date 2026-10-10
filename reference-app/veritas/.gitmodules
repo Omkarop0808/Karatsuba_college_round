@@ -1,9 +1,0 @@
-[submodule "webcam"]
-	path = webcam
-	url = https://github.com/yousefabukar/webcam.git
-[submodule "verification"]
-	path = verification
-	url = https://github.com/yousefabukar/verification.git
-[submodule "veritas-core"]
-	path = veritas-core
-	url = https://github.com/ssight/veritas-core

@@ -3,12 +3,14 @@ pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./VerityRegistry.sol";
+import "./PoseidonT5.sol";
 
 contract VerityDisputeManager is ReentrancyGuard {
     uint256 public constant CHALLENGE_BOND = 0.02 ether;
     uint256 public constant REVEAL_WINDOW_BLOCKS = 50;
     
     VerityRegistry public immutable registry;
+    IPoseidonT5 public immutable poseidon;
 
     struct Challenge {
         address challenger;
@@ -29,17 +31,18 @@ contract VerityDisputeManager is ReentrancyGuard {
     error InvalidReveal();
     error IncorrectBond();
 
-    constructor(address payable _registry) {
+    constructor(address payable _registry, address _poseidon) {
         registry = VerityRegistry(_registry);
+        poseidon = IPoseidonT5(_poseidon);
     }
 
     function challengeResult(uint256 taskId) external payable {
         if (msg.value != CHALLENGE_BOND) revert IncorrectBond();
 
-        (,,,,,, , uint64 challengeEnd, VerityRegistry.Status status) = registry.tasks(taskId);
+        VerityRegistry.Task memory task = registry.getTask(taskId);
         
-        if (status != VerityRegistry.Status.Submitted) revert BadStatus();
-        if (block.number > challengeEnd) revert WindowClosed();
+        if (task.status != VerityRegistry.Status.Submitted) revert BadStatus();
+        if (block.number > task.challengeEnd) revert WindowClosed();
 
         challenges[taskId] = Challenge({
             challenger: msg.sender,
@@ -52,46 +55,32 @@ contract VerityDisputeManager is ReentrancyGuard {
     }
 
     function revealInput(uint256 taskId, bytes calldata preimage) external nonReentrant {
-        (,, bytes32 inputCommitment,,,,,, VerityRegistry.Status status) = registry.tasks(taskId);
-        if (status != VerityRegistry.Status.Challenged) revert NotChallenged();
+        VerityRegistry.Task memory task = registry.getTask(taskId);
+        if (task.status != VerityRegistry.Status.Challenged) revert NotChallenged();
 
         Challenge memory c = challenges[taskId];
         if (block.number > c.revealDeadline) revert WindowClosed();
 
-        // Validate hash. The Poseidon hash logic was used for inputCommitment in Phase 1
-        // Wait, TECH-SPEC FR-4.3 states: keccak256(preimage) == inputCommitment
-        // So the inputCommitment is passed as Poseidon, but the spec says keccak256(preimage)
-        // Wait... If inputCommit is Poseidon hash of inputs, then revealInput can just verify Poseidon? 
-        // But doing Poseidon in Solidity takes a library. Alternatively, since it requires the preimage, we could have used Keccak256 previously.
-        // Actually, since I mapped it to Poseidon earlier in the circuit... Oh, circomlib has Poseidon, but verifying Poseidon in Solidity is 3k gas but needs the contract.
-        // Wait! The circuit checks Poseidon(income, debt, history, salt) == inputCommit. So checking `keccak256(preimage) == inputCommit` will NEVER MATCH!
-        // Tech-Spec 4.3: "revealInput(taskId, preimage) with keccak256(preimage) == inputCommitment".
-        // To fix this without importing Poseidon into Solidity: we can just have the circuit check:
-        // `Poseidon() == outputCommit` -> OK. But `inputCommit` can just be part of the circuit directly OR we use Keccak in solidity? No, circom doesn't easily do keccak (100k constraints).
-        // Let's assume the user was aware and `revealInput` just takes the raw signals, we can skip full Poseidon verification in Solidity and use a mock for the hackathon, OR we can deploy `PoseidonT3` contract.
-        // Since this is a hackathon, and implementing Poseidon in Solidity is possible via `circomlibjs` exporting the bytecode... Let's just deploy PoseidonT5. Or simplify:
-        // Actually, if we just check a secondary hash: the user provides `keccak256(preimage) == keccakInputCommit`.
-        // To match the spec strictly: "keccak256(preimage) == inputCommitment". I'll implement exactly that.
-        // We will just pass `keccak256` of the inputs as `inputCommitment` to `requestComputation`?
-        // Let's adjust VerityRegistry's `revealInput` to check `keccak` of the preimage!
-        if (keccak256(preimage) != inputCommitment) revert InvalidReveal();
+        uint256[4] memory inputs = abi.decode(preimage, (uint256[4]));
+        if (bytes32(poseidon.poseidon(inputs)) != task.inputCommitment) revert InvalidReveal();
 
         delete challenges[taskId];
 
-        // Status back to Submitted, new window
-        registry.setTaskStatus(taskId, VerityRegistry.Status.Submitted);
-        registry.updateChallengeEnd(taskId, uint64(block.number + registry.CHALLENGE_WINDOW_BLOCKS()));
+        // Status to Finalized
+        registry.setTaskStatus(taskId, VerityRegistry.Status.Finalized);
+        
+        VerityRegistry.Task memory taskAfter = registry.getTask(taskId);
+        registry.zeroTaskBounty(taskId);
 
-        // Challenger bond is forfeited (sent to treasury or worker)
-        (,,,,,address worker,,,) = registry.tasks(taskId);
-        registry.payout(worker, c.bond);
+        // Challenger bond is forfeited, worker gets normal payout + bond
+        registry.payout(taskAfter.worker, taskAfter.bounty + c.bond);
 
         emit ChallengerSlashed(taskId, c.challenger);
     }
 
     function resolveChallenge(uint256 taskId) external nonReentrant {
-        (address requester,,,uint256 bounty,,address worker,,, VerityRegistry.Status status) = registry.tasks(taskId);
-        if (status != VerityRegistry.Status.Challenged) revert NotChallenged();
+        VerityRegistry.Task memory task = registry.getTask(taskId);
+        if (task.status != VerityRegistry.Status.Challenged) revert NotChallenged();
 
         Challenge memory c = challenges[taskId];
         if (block.number <= c.revealDeadline) revert WindowOpen();
@@ -102,21 +91,22 @@ contract VerityDisputeManager is ReentrancyGuard {
         registry.zeroTaskBounty(taskId);
 
         // Slash worker 50% to challenger
-        uint256 workerStake = registry.workerStakes(worker);
+        uint256 workerStake = registry.workerStakes(task.worker);
         uint256 slashAmount = registry.MIN_WORKER_STAKE();
         if (workerStake < slashAmount) slashAmount = workerStake;
         
-        registry.slashWorker(worker, slashAmount);
+        registry.slashWorker(task.worker, slashAmount);
 
         // Refund challenger bond + 50% of slashed stake
         uint256 reward = c.bond + (slashAmount / 2);
         registry.payout(c.challenger, reward);
+        registry.addProtocolFee(slashAmount - (slashAmount / 2));
         
         // Refund requester
-        if (bounty > 0) {
-            registry.payout(requester, bounty);
+        if (task.bounty > 0) {
+            registry.payout(task.requester, task.bounty);
         }
 
-        emit WorkerSlashed(taskId, worker);
+        emit WorkerSlashed(taskId, task.worker);
     }
 }

@@ -24,12 +24,20 @@ node_modules/
 *.tsbuildinfo
 
 # Environment & Logs
+.env
 .env*.local
+**/.env
+!**/.env.example
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Junk & Archival
+junk/
+**/junk/
+
 # OS metadata
 .DS_Store
 Thumbs.db
+
 
