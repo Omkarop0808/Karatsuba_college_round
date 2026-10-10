@@ -1,0 +1,19 @@
+{
+  "name": "circuits",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node demo_prove.js",
+    "demo": "node demo_prove.js",
+    "gen-input": "node generate_input.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "circomlib": "^2.0.5",
+    "circomlibjs": "^0.1.7"
+  }
+}

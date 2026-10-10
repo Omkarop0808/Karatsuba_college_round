@@ -89,13 +89,16 @@ graph TD
 | Entity ID | Type | Interfaces / Methods | Dependencies | Role |
 |---|---|---|---|---|
 | `VerityRegistry.sol` | Smart Contract | `requestComputation`, `submitResult`, `claimTimeoutRefund` | `VerityVerifier.sol`, `VerityDispute.sol` | Orchestrates bounty escrow, worker collateral, task state transitions. |
-| `VerityVerifier.sol` | Smart Contract | `verifyProof(uint[2] a, uint[2][2] b, uint[2] c, uint[] input)` | EVM Precompile `0x08` (`ecPairing`) | Evaluates Groth16 pairings on the BN254 curve in < 220k gas. |
+| `VerityVerifier.sol` | Smart Contract | `verifyProof(ProofPoints proof, uint256[] signals)` | `Groth16Verifier.sol`, EVM Precompile `0x08` (`ecPairing`) | Evaluates Groth16 pairings on the BN254 curve in ~252k gas. Tested in `VerityVerifier.t.sol`. |
+| `Groth16Verifier.sol` | Smart Contract | `verifyProof(uint[2] _pA, uint[2][2] _pB, uint[2] _pC, uint[7] _pubSignals)` | EVM Precompiles `0x06`, `0x07`, `0x08` | Direct Groth16 pairing verifier contract generated via SnarkJS. |
 | `VerityDispute.sol` | Smart Contract | `challengeResult`, `resolveDispute`, `slashWorker` | `VerityRegistry.sol` | Manages dispute challenge window, challenger bonds, and 50/50 slashing payouts. |
 
 ### Cryptographic Proving Pipeline
 | Entity ID | Type | Formats / Standards | Inputs / Outputs | Role |
 |---|---|---|---|---|
-| `compute_audit.circom` | Circom Circuit | Circom 2.1 / R1CS | In: Private $X$, Public $H(X)$ $\to$ Out: Public $Y$ | Mathematically proves that $Y$ was deterministically derived from committed input $X$. |
+| `compute_audit.circom` | Circom Circuit | Circom 2.1 / R1CS | 2,543 constraints, 4 private inputs, 7 public inputs | Credit eligibility predicate ($score = w_1 \cdot \text{inc} + w_3 \cdot \text{hist} - w_2 \cdot \text{debt} \ge T$) bound via 3 Poseidon hashes. |
+| `demo_prove.js` | Demo Runner | Node.js / SnarkJS | In: CLI parameters $\to$ Out: Proof + OK | Unified 1-step live proving runner executing commitment, witness, proof, and verify in ~3.5s total. |
+| `generate_input.js` | Helper Tool | Node.js / CircomlibJS | In: CLI arguments $\to$ Out: `input.json` | Computes dynamic Poseidon hash commitments ($H_{in}, H_{out}, H_{pol}$) preventing assertion crashes. |
 | `worker.ts` | Daemon Script | TypeScript / Node.js | In: WebSocket RPC $\to$ Out: Ethereum Tx | Autonomous worker watching for new tasks, executing code, and generating proofs. |
 | `attacks.ts` | Attack Harness | TypeScript | In: Task ID $\to$ Out: Tampered Tx Payload | Synthesizes mutated proofs and corrupted payloads for the Chaos Lab. |
 
