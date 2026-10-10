@@ -40,19 +40,19 @@ export default function Home() {
         {/* Subtle Ambient Blueprint Grid Pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10" suppressHydrationWarning>
           
           {/* Hero Left Column (6 cols) */}
-          <div className="lg:col-span-6 flex flex-col items-start text-left space-y-6">
+          <div className="lg:col-span-6 flex flex-col items-start text-left space-y-6" suppressHydrationWarning>
             
             {/* Swiss Brutalist Pill Eyebrow Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950 text-white text-xs font-mono font-bold tracking-wider shadow-sm">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950 text-white text-xs font-mono font-bold tracking-wider shadow-sm" suppressHydrationWarning>
               <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
               <span>BITNBUILD 2026 &bull; PROVABLE OFF-CHAIN COMPUTE</span>
             </div>
 
             {/* Hero Main Heading */}
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.05] text-slate-950">
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.05] text-slate-950" suppressHydrationWarning>
               Prove the <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600">
                 computation.
@@ -62,12 +62,12 @@ export default function Home() {
             </h1>
 
             {/* Subtitle */}
-            <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl font-normal">
+            <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl font-normal" suppressHydrationWarning>
               Verity allows decentralized applications to offload expensive financial risk scoring and AI predicates off-chain, verifying zero-knowledge validity on Ethereum in <span className="text-blue-600 font-mono font-bold">218k gas</span> via EVM precompile 0x08.
             </p>
 
             {/* Action Group */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
+            <div className="flex flex-wrap items-center gap-4 pt-2" suppressHydrationWarning>
               <Link
                 href="/request"
                 className="group flex items-center gap-3 pl-6 pr-2 py-2.5 rounded-full bg-slate-950 hover:bg-slate-800 text-white font-mono font-black text-xs uppercase tracking-wider transition-all duration-200 border-2 border-slate-950 shadow-[4px_4px_0px_#0f172a] hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none no-underline"
@@ -107,16 +107,16 @@ export default function Home() {
             </div>
 
             {/* Quick Trust Signals */}
-            <div className="pt-4 flex items-center gap-6 text-xs font-mono text-slate-700 border-t-2 border-slate-300 w-full font-bold">
-              <div className="flex items-center gap-1.5">
+            <div className="pt-4 flex items-center gap-6 text-xs font-mono text-slate-700 border-t-2 border-slate-300 w-full font-bold" suppressHydrationWarning>
+              <div className="flex items-center gap-1.5" suppressHydrationWarning>
                 <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
                 <span>Circom 2.1 Verified</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5" suppressHydrationWarning>
                 <CheckCircleIcon className="w-4 h-4 text-blue-600" />
                 <span>Groth16 BN254 Pairings</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5" suppressHydrationWarning>
                 <CheckCircleIcon className="w-4 h-4 text-purple-600" />
                 <span>Anvil Localnet Live</span>
               </div>
@@ -125,7 +125,7 @@ export default function Home() {
           </div>
 
           {/* Hero Right Column (6 cols): Live 3D Cryptographic Core */}
-          <div className="lg:col-span-6 w-full">
+          <div className="lg:col-span-6 w-full" suppressHydrationWarning>
             {/* Bold Brutalist Double-Bezel Frame for 3D Viewport */}
             <div className="relative rounded-[2.5rem] border-2 border-slate-950 p-2 bg-white shadow-[8px_8px_0px_#0f172a]">
               <div className="rounded-[calc(2.5rem-0.5rem)] bg-gradient-to-b from-slate-100 to-white border border-slate-300 overflow-hidden shadow-inner">

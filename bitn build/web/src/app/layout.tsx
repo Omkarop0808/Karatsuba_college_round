@@ -31,6 +31,51 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`h-full antialiased ${sansFont.variable} ${monoFont.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  function cleanAttr(el) {
+                    if (!el || !el.attributes) return;
+                    for (var i = el.attributes.length - 1; i >= 0; i--) {
+                      var n = el.attributes[i].name;
+                      if (n.indexOf('rtrvr') !== -1 || n.indexOf('data-rtrvr') !== -1) {
+                        el.removeAttribute(n);
+                      }
+                    }
+                  }
+                  var obs = new MutationObserver(function(mutations) {
+                    for (var i = 0; i < mutations.length; i++) {
+                      var m = mutations[i];
+                      if (m.type === 'attributes') {
+                        cleanAttr(m.target);
+                      } else if (m.type === 'childList') {
+                        for (var j = 0; j < m.addedNodes.length; j++) {
+                          var node = m.addedNodes[j];
+                          if (node.nodeType === 1) {
+                            cleanAttr(node);
+                            var descendants = node.getElementsByTagName('*');
+                            for (var k = 0; k < descendants.length; k++) {
+                              cleanAttr(descendants[k]);
+                            }
+                          }
+                        }
+                      }
+                    }
+                  });
+                  obs.observe(document.documentElement, {
+                    attributes: true,
+                    childList: true,
+                    subtree: true
+                  });
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col text-slate-900 font-sans" suppressHydrationWarning>
         <Suspense fallback={<div className="h-20 w-full border-b-2 border-slate-950 bg-white" />}>
           <Navbar />
