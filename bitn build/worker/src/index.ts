@@ -8,7 +8,7 @@ import { generateProof } from './prover';
 dotenv.config();
 
 const privateKey = (process.env.PRIVATE_KEY || '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d') as `0x${string}`;
-const registryAddress = (process.env.REGISTRY_ADDRESS || '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0') as `0x${string}`;
+const registryAddress = (process.env.REGISTRY_ADDRESS || '0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6') as `0x${string}`;
 const rpcUrl = process.env.RPC_URL || 'http://127.0.0.1:8545';
 
 const account = privateKeyToAccount(privateKey);
