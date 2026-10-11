@@ -1,43 +1,254 @@
-# Dependencies
+# ==============================================================================
+# Comprehensive Root .gitignore for Blockchain / ZK-EVM Monorepo
+# Subprojects: Node.js, Next.js, Foundry/Solidity, Circom/ZK, Python, Rust/Cargo,
+#              Worker TypeScript, OS metadata, IDEs, Logs & Test Artifacts
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Reference Applications & External Repositories
+# ------------------------------------------------------------------------------
+reference-app/
+
+# ------------------------------------------------------------------------------
+# 1. Environment Variables, Secrets & Sensitive Credentials
+# ------------------------------------------------------------------------------
+.env
+.env.*
+*.env
+*.env.*
+# Allow committed template/example files
+!.env.example
+!.env*.example
+!.env.template
+!.env*.template
+
+# Private keys and certificates (preserving Circom *.zkey)
+*.pem
+*.key
+!*.zkey
+*.cert
+*.crt
+*.pfx
+*.p12
+*.keystore
+id_rsa
+id_ecdsa
+id_ed25519
+
+# ------------------------------------------------------------------------------
+# 2. Dependencies & Package Managers (Node.js, Yarn, pnpm)
+# ------------------------------------------------------------------------------
 node_modules/
 **/node_modules/
+jspm_packages/
 
-# Circuit outputs & large binary cryptographic keys
-**/build/*.ptau
-**/build/*.wtns
-**/build/*.r1cs
-**/build/circuit_0000.zkey
-*.ptau
-*.wtns
+# Yarn & pnpm artifacts
+.pnp/
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+.pnpm-store/
 
-
-# Foundry & Solidity build artifacts
-**/out/
-**/cache/
-**/broadcast/
-
-
-# Next.js & Frontend builds
+# ------------------------------------------------------------------------------
+# 3. Next.js, Frontend & Build Outputs
+# ------------------------------------------------------------------------------
+.next/
 **/.next/
+.turbo/
 **/.turbo/
+.vercel/
 **/.vercel/
+dist/
+**/dist/
 *.tsbuildinfo
+next-env.d.ts
 
+<<<<<<< HEAD
 # Environment & Logs
 .env
 .env*.local
 **/.env
 !**/.env.example
+=======
+# ------------------------------------------------------------------------------
+# 4. TypeScript Generated Files in Worker
+# ------------------------------------------------------------------------------
+bitn build/worker/src/*.js
+bitn build/worker/src/*.js.map
+bitn build/worker/src/*.d.ts
+bitn build/worker/src/*.d.ts.map
+*.js.map
+*.d.ts.map
+
+# ------------------------------------------------------------------------------
+# 5. Solidity & Foundry / Hardhat Build Artifacts
+# ------------------------------------------------------------------------------
+out/
+**/out/
+cache/
+**/cache/
+broadcast/
+**/broadcast/
+artifacts/
+**/artifacts/
+typechain/
+**/typechain/
+typechain-types/
+**/typechain-types/
+
+# Gas reports & test coverage
+.gas-report
+gasReporterOutput.json
+coverage/
+**/coverage/
+coverage.json
+.nyc_output/
+
+# ------------------------------------------------------------------------------
+# 6. Circom & Zero-Knowledge Proving Artifacts
+# ------------------------------------------------------------------------------
+# Heavy powers of tau, witnesses, and R1CS constraint systems
+*.ptau
+**/build/*.ptau
+*.wtns
+**/build/*.wtns
+*.r1cs
+**/build/*.r1cs
+*.sym
+**/build/*.sym
+
+# Intermediate ceremony keys (preserving circuit_final.zkey & vkey.json)
+*circuit_0000.zkey
+*circuit_0001.zkey
+**/build/*0000.zkey
+**/build/*0001.zkey
+
+# Circom C++ witness generator folders
+*_cpp/
+**/build/*_cpp/
+
+# ------------------------------------------------------------------------------
+# 7. Python & Pytest Artifacts (reference-app/AuditVector)
+# ------------------------------------------------------------------------------
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Packaging, eggs & wheels
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+reference-app/AuditVector/build/
+
+# Pytest, linters & typecheckers
+.pytest_cache/
+**/.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.mypy_cache/
+.ruff_cache/
+
+# ------------------------------------------------------------------------------
+# 8. Rust & Cargo (reference-app/zkcg-public)
+# ------------------------------------------------------------------------------
+target/
+**/target/
+debug/
+**/*.rs.bk
+*.pdb
+**/mutants.out*/
+
+# ------------------------------------------------------------------------------
+# 9. Cloud, Services & Databases
+# ------------------------------------------------------------------------------
+.firebase/
+.serverless/
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# ------------------------------------------------------------------------------
+# 10. Logs & Debugging Output
+# ------------------------------------------------------------------------------
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
 
 # Junk & Archival
 junk/
 **/junk/
 
-# OS metadata
+# ------------------------------------------------------------------------------
+# 11. Operating System Metadata
+# ------------------------------------------------------------------------------
+# macOS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
 Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+Desktop.ini
+$RECYCLE.BIN/
 
+# Linux
+*~
 
+# ------------------------------------------------------------------------------
+# 12. IDEs & Editors
+# ------------------------------------------------------------------------------
+.idea/
+*.iml
+*.iws
+*.ipr
+*.swp
+*.swo
+*.bak
+*.tmp
+*.temp
+
+# VS Code (preserve project shared settings/tasks if committed)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
