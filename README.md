@@ -76,7 +76,7 @@ npm run dev
 
 ## 📄 Documentation
 
-For full technical specifications, review the [`specs/`](specs/) directory:
+- 📘 **[Master Technical Documentation](DOCUMENTATION.md)** — Comprehensive architecture, cryptographic specs, contracts, circuits, worker, Chaos Lab, and runbook.
 - [PRD (Product Requirements Document)](specs/PRD.md)
 - [Technical Specification](specs/TECH-SPEC.md)
 - [System Workflow & State Machine](specs/WORKFLOW.md)
