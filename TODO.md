@@ -34,3 +34,15 @@
 ## 5. Master Project Documentation
 - [x] Create comprehensive `DOCUMENTATION.md` covering all 7 `ps.md` requirements, architecture, math/cryptography, contracts, circuits, worker, frontend, Chaos Lab, economic model, and complete operational runbook.
 - [x] Update root `README.md` to reference `DOCUMENTATION.md`.
+
+## 6. Prototype Screenshots & Hackathon Showcase
+- [x] Copy user prototype screenshots into `docs/screenshots/`:
+  - `01_hero_overview.png` (`image copy 5.png` - Landing page & 3D ZK Lattice)
+  - `02_cryptographic_pipeline.png` (`image copy 4.png` - End-to-end cryptographic pipeline)
+  - `03_request_studio.png` (`image copy.png` - Request Studio & Escrow Builder)
+  - `04_worker_telemetry.png` (`image.png` - Worker Prover Daemon)
+  - `05_chaos_lab.png` (`image copy 3.png` - The Verity Chaos Lab)
+  - `06_proof_passport.png` (`image copy 2.png` - Proof Passport Attestation)
+- [x] Overhaul `README.md` with hackathon-winning structure, 7 problem statement gates, math formulas, architecture flow, threat matrix, gas benchmarks, and local runbook.
+- [x] Integrate screenshots into `DOCUMENTATION.md` (Sections 3 & 7).
+- [x] Push commits to remote repository `karatsuba` (Omkarop0808/Karatsuba_college_round).

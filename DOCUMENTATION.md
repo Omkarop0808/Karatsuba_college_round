@@ -74,6 +74,8 @@ Commitments computed:
 
 ## 3. System Architecture & End-to-End Workflow
 
+![End-to-End Cryptographic Pipeline](docs/screenshots/02_cryptographic_pipeline.png)
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -229,20 +231,36 @@ The worker node lives in [`bitn build/worker/`](file:///d:/blockchain/bitn%20bui
 
 The web interface is built with **Next.js 16 (App Router)**, **Tailwind CSS**, **Lucide Icons**, and **Three.js** in [`bitn build/web/`](file:///d:/blockchain/bitn%20build/web/).
 
-### 7.1 Pages & Functionality
-- **`/request` (Task Requester Studio)**:
-  - Configure financial audit parameters (`Income`, `Debt`, `History`, `Bounty`, `Timeout`).
-  - Real-time arithmetic score and eligibility preview.
-  - Generates deterministic Poseidon commitments and dispatches `requestComputation` to Anvil.
-- **`/worker` (Telemetry Console)**:
-  - Real-time log stream showing job pick-up, witness generation, and Groth16 proving timings.
-  - Displays collateral stake, worker status, and gas expenditure metrics.
-- **`/marketplace` (Task Board)**:
-  - Filterable overview of all past and pending tasks grouped by status (`Requested`, `Submitted`, `Finalized`).
-- **`/chaos` (Chaos Lab)**:
-  - Interactive adversary testbench allowing judges to trigger live malicious attacks on the EVM.
-- **`/passport/[taskId]` (Proof Passport)**:
-  - Displays tamper-evident verification passport with cryptographic hashes, block timestamps, and verifier receipts.
+### 7.1 Hero Landing & 3D Interactive Node (`/`)
+![Verity Overview & 3D Interactive Node](docs/screenshots/01_hero_overview.png)
+- **Real-Time Network HUD**: Displays active worker count, gas saved metric, average proving latency, and escrow statistics.
+- **Interactive BN254 Cryptographic Matrix**: Visualizes zero-knowledge polynomial commitments and pairing proofs.
+
+### 7.2 Request Studio & Escrow Builder (`/request`)
+![Request Studio](docs/screenshots/03_request_studio.png)
+- **Zero-Knowledge Input Shielding**: Configure financial audit parameters (`Income`, `Debt`, `History`, `Bounty`, `Timeout`).
+- **Real-Time Arithmetic Score**: Real-time score and eligibility preview computed via client-side model equations.
+- **Poseidon Commitment Generation**: Generates deterministic Poseidon commitments in browser memory and dispatches `requestComputation` to Anvil.
+
+### 7.3 Prover Worker Telemetry Console (`/worker`)
+![Worker Node Telemetry](docs/screenshots/04_worker_telemetry.png)
+- **Autonomous Staking Daemon**: Displays collateral stake (0.05 ETH min), node status, and gas expenditure metrics.
+- **Proving Telemetry Stream**: Real-time log stream showing job pick-up, witness generation, and Groth16 proving timings (~840ms).
+- **Single-Click Live Simulation**: Trigger simulated computation for live hackathon presentations.
+
+### 7.4 The Verity Chaos Lab (`/chaos`)
+![The Verity Chaos Lab](docs/screenshots/05_chaos_lab.png)
+- **Interactive Adversarial Testbench**: Allows judges and auditors to trigger live malicious attacks against smart contracts:
+  - Output Bit-Flip Forgeries (`revert PublicSignalsMismatch`).
+  - Synthetic Fake Groth16 Proofs (`revert InvalidProof` via `0x08 ecPairing`).
+  - Griefing Dispute Defense (Slashing malicious challenger bonds).
+  - Premature Timeout Exploits (`revert BadStatus`).
+
+### 7.5 Verity Proof Passport (`/passport/[taskId]`)
+![Verity Proof Passport](docs/screenshots/06_proof_passport.png)
+- **Tamper-Evident Self-Authenticating Credential**: Displays cryptographic hashes, block numbers, gas receipts, and JSON-LD attestations.
+- **Interactive Execution DAG**: Step-by-step provenance tracking from raw inputs to EVM pairing finalization.
+- **On-Chain Re-Verification**: One-click re-verification on Ethereum with instant cryptographic validation.
 
 ---
 

@@ -252,3 +252,7 @@ $RECYCLE.BIN/
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
+
+# Loose root image files (curated copies preserved in docs/screenshots/)
+/image*.png
+/image copy*.png
